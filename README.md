@@ -185,14 +185,18 @@ npm start
 
 ## Future Improvements
 
-| Area                     | Enhancement                                                    |
-| ------------------------ | -------------------------------------------------------------- |
-| Payment Integration      | Add real payment gateways (Stripe, Razorpay, etc.)             |
-| Unit & Integration Tests | Full tests for event creation, checkout, concurrency scenarios |
-| Monitoring & Metrics     | Track inventory, failed checkouts, and bot attempts            |
-| Scalability              | Redis clusters, horizontal scaling, queueing for peak traffic  |
-| Bot Detection            | CAPTCHA, email verification, and behavior-based throttling     |
-| Notifications            | Send purchase confirmation via email or SMS                    |
+
+| Area                     | Enhancement                                                                                           |
+| ------------------------ | ------------------------------------------------------------------------------------------------------|
+| Payment Integration      | Add real payment gateways (Stripe, Razorpay, etc.)                                                    |
+| Unit & Integration Tests | Full tests for event creation, checkout, concurrency scenarios                                        |
+| Monitoring & Metrics     | Track inventory, failed checkouts, and bot attempts                                                   |
+| Scalability              | Redis clusters, horizontal scaling, queueing for peak traffic                                         |
+| Bot Detection            | CAPTCHA, email verification, and behavior-based throttling                                            |
+| Notifications            | Send purchase confirmation via email or SMS                                                           |
+| Deployment & DevOps      | Containerization with Docker, orchestration with Kubernetes/Docker Compose for deployment and scaling |
+
+
 
 
 
