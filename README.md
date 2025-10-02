@@ -1,58 +1,200 @@
-# Backend Engineering Take-Home Exercise
+# Event Ticketing System
 
-Taylor Swift needs your help - while existing ticketing systems work, they are failing to enable her true fans to come to concerts at face value. 
-You've been tasked to implement a simplified event ticketing purchasing system, which allows users to purchase tickets on a specific release date smoothly. 
+A simplified, scalable ticketing system that allows fans to purchase concert tickets smoothly at release time, while handling high traffic and preventing bots. Built in TypeScript with clean architecture and Redis for persistent and concurrency-safe inventory management.
 
-# Context
-* Ticket platforms are burst based in nature - everyone tries to buy tickets at an exact point in time, and then no traffic
-* Bots also try to purchase tickets, and we do not want this.
+---
 
-## Time Expectation
-* Expected time: 2-3 hours
-* Please don't spend more than 3 hours on this exercise
+## Features
 
-## Core Features
+* **Event Management:**
 
-### 1. Event Management
-* Each event should have basic details (name, date, venue, etc.)
-* Events can have multiple ticket types (e.g., VIP, General Admission) as well as seats, which are tied to a specific seat in a venue.
+  * Store event details (name, date, venue).
+  * Support multiple ticket types (VIP, General Admission).
+  * Seat-level ticket allocation (each ticket tied to a specific seat).
 
-### 2. Ticket Inventory
-* Track available tickets for each ticket type
-* Handle concurrent ticket purchases safely
-* Handle basic reservation mechanism
+* **Ticket Inventory:**
 
-### 3. Checkout Flow
-* Create a ticket checkout endpoint
+  * Track available tickets per ticket type.
+  * Concurrency-safe purchase using Redis atomic operations.
+  * Reservation mechanism to temporarily hold tickets during checkout.
 
-## Technical Requirements
+* **Checkout Flow:**
 
-1. Use TypeScript
+  * Secure checkout endpoint.
+  * Validates user input and ticket availability.
+  * Rate-limiting to mitigate bot traffic.
 
-## What We're Looking For
+* **Bot & Load Handling:**
 
-* Clean architecture and separation of concerns
-* Type safety and proper interfaces
-* Concurrency handling
-* Ideas on how to handle load/bots
+  * API rate-limiting per IP or user.
+  * CORS and authentication middleware.
+  * Optimized for burst traffic scenarios common in ticket sales.
 
-## Getting Started
+---
 
-Take a look at the `domains` folder to see some sample interfaces to get started. Please feel free to modify them as you see fit, they are merely a framework to get started. They are by no means correct (not very scalable) or necessary for you implementation/ideas.
+## File and Folder Structure
 
-## Must dos
+```bash
+.
+├── src/
+│   ├── app.ts / server.ts              # Entry points
+│   ├── config.ts / constants.ts        # Configuration & constants
+│   ├── db/
+│   │   ├── redisClient.ts              # Redis connection
+│   │   └── redisRepo.ts                # Redis operations (atomic, concurrency-safe)
+│   ├── domains/
+│   │   ├── checkout/
+│   │   │   ├── checkout.controller.ts
+│   │   │   ├── checkout.service.ts
+│   │   │   ├── checkout.schema.ts
+│   │   │   └── checkout.interfaces.ts
+│   │   ├── events/
+│   │   │   ├── event.controller.ts
+│   │   │   ├── event.entity.ts
+│   │   │   ├── event.interfaces.ts
+│   │   │   └── event.service.ts
+│   │   └── tickets/
+│   │       ├── ticket.controller.ts
+│   │       ├── ticket.entity.ts
+│   │       ├── ticket.interfaces.ts
+│   │       └── ticket.service.ts
+│   ├── middlewares/
+│   │   ├── auth.ts
+│   │   ├── corsOptions.ts
+│   │   ├── errorHandler.ts
+│   │   └── rateLimiter.ts
+│   └── utils/
+│       └── logger.ts
+├── .env
+├── package.json / package-lock.json
+└── tsconfig.json
+```
 
-* There are quite a few considerations when building a ticketing platform. Ideally, you would outline things you would do given more time, and things you need to look out for. Future scalability, expanding to other use cases, etc is nice.
+---
 
-## Submission Guidelines
+## Architecture Overview
 
-1. Share your code with me via email
-2. Include a README.md with:
-   * Architecture decisions and tradeoffs
-   * What you would improve with more time
+* **Controller Layer:** Handles HTTP requests, input validation, and error responses.
+* **Service Layer:** Business logic for events, tickets, and checkout. Handles inventory and reservation flow.
+* **Data Layer (Redis):**
 
-## Evaluation Criteria
+  * Concurrency-safe ticket inventory management using atomic operations.
+  * Supports temporary reservations with expiration for checkout sessions.
+* **Middleware:**
 
-* Organization and architecture
-* General handling of weird cases & potential pitfalls
-* How robust the overall checkout flow would be given any number of variables
+  * Rate-limiting for burst traffic protection.
+  * CORS, authentication, and global error handling.
+* **Seat-level Allocation:** Each ticket is linked to a specific seat to prevent overselling.
+
+---
+
+## Concurrency & Burst Handling
+
+* Redis atomic operations ensure that multiple concurrent checkout requests cannot oversell tickets.
+* Reservations hold tickets for a short period (e.g., 5 minutes) until the purchase is confirmed.
+* Rate limiting reduces bot traffic and mitigates server overload during ticket release.
+* For extreme scale, multi-region Redis clusters and sharding could be implemented.
+
+---
+
+### Production-grade Improvements
+
+If given more time, the following enhancements could make the system **scalable, resilient, and fair under extreme load**:
+
+1. **Distributed Locking for Multi-instance Deployments**
+
+   * Use Redis Redlock or Zookeeper-based distributed locks for atomic ticket allocation across multiple server instances.
+   * Ensures no race conditions even in a horizontally scaled architecture.
+
+2. **Optimistic Locking**
+
+   * Use version numbers or timestamps in ticket entities.
+   * On purchase, only decrement if the version hasn’t changed, preventing overselling in distributed DB setups.
+
+3. **Queue-based Checkout Flow**
+
+   * Implement a FIFO queue (e.g., using Redis Streams, Kafka, or RabbitMQ).
+   * Ensures that ticket purchase requests are processed sequentially and fairly during release bursts.
+
+4. **Shard Ticket Inventory**
+
+   * Split tickets by type or seat sections across multiple Redis keys or clusters.
+   * Reduces contention and improves throughput for high-demand events.
+
+5. **Rate Limiting with Bot Detection**
+
+   * Advanced rate-limiting with behavioral analysis (e.g., CAPTCHA on suspicious activity).
+   * Combine with user verification (email/phone) to reduce bot purchases.
+
+6. **Idempotent Checkout Requests**
+
+   * Assign a unique checkout session ID to each attempt.
+   * Prevents duplicate purchases if a request is retried due to network issues.
+
+7. **Monitoring & Metrics**
+
+   * Track failed purchase attempts, oversell attempts, and reservation expirations.
+   * Enable auto-scaling during release peaks based on these metrics.
+
+8. **Fallback Mechanisms**
+
+   * If Redis is down, temporarily switch to in-memory or DB-backed queue with eventual consistency.
+   * Avoids full system outage during ticket release spikes.
+
+
+---
+
+## Future Improvements
+
+| Area                     | Enhancement                                                    |
+| ------------------------ | -------------------------------------------------------------- |
+| Payment Integration      | Add real payment gateways (Stripe, Razorpay, etc.)             |
+| Unit & Integration Tests | Full tests for event creation, checkout, concurrency scenarios |
+| Monitoring & Metrics     | Track inventory, failed checkouts, and bot attempts            |
+| Scalability              | Redis clusters, horizontal scaling, queueing for peak traffic  |
+| Bot Detection            | CAPTCHA, email verification, and behavior-based throttling     |
+| Notifications            | Send purchase confirmation via email or SMS                    |
+
+---
+
+## Environment Variables
+
+Set in `.env` file:
+
+```bash
+PORT=3000
+REDIS_HOST=localhost
+REDIS_PORT=6379
+API_KEY=464064cf4820c736c1b57f8375ee753985c0bd15aa0c05f57fe9d913eae23b1d
+RATE_LIMIT_WINDOW_MS=60000
+RATE_LIMIT_MAX=10
+```
+
+---
+
+## Running Locally
+
+```bash
+npm install
+npm run build
+npm start
+```
+
+* API runs at: `http://localhost:3000`
+* Redis required for inventory and reservation management
+
+---
+
+## Design Decisions
+
+* **Concurrency-safe inventory**: lightweight, fast, supports atomic ops.
+* **Clean separation of concerns**: Controllers → Services → Entities → Data Layer.
+* **TypeScript & Interfaces**: Full type safety across entities and services.
+* **Rate-limiting & middleware**: Simple first line of defense against bots.
+* **Seat-level tracking**: Prevents double-booking in high-demand events.
+* **Future-Improvements-Suggested**: Suggested future improvements in system.
+
+---
+
+
+
