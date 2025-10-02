@@ -144,19 +144,6 @@ If given more time, the following enhancements could make the system **scalable,
 
 ---
 
-## Future Improvements
-
-| Area                     | Enhancement                                                    |
-| ------------------------ | -------------------------------------------------------------- |
-| Payment Integration      | Add real payment gateways (Stripe, Razorpay, etc.)             |
-| Unit & Integration Tests | Full tests for event creation, checkout, concurrency scenarios |
-| Monitoring & Metrics     | Track inventory, failed checkouts, and bot attempts            |
-| Scalability              | Redis clusters, horizontal scaling, queueing for peak traffic  |
-| Bot Detection            | CAPTCHA, email verification, and behavior-based throttling     |
-| Notifications            | Send purchase confirmation via email or SMS                    |
-
----
-
 ## Environment Variables
 
 Set in `.env` file:
@@ -195,6 +182,18 @@ npm start
 * **Future-Improvements-Suggested**: Suggested future improvements in system.
 
 ---
+
+## Future Improvements
+
+| Area                     | Enhancement                                                    |
+| ------------------------ | -------------------------------------------------------------- |
+| Payment Integration      | Add real payment gateways (Stripe, Razorpay, etc.)             |
+| Unit & Integration Tests | Full tests for event creation, checkout, concurrency scenarios |
+| Monitoring & Metrics     | Track inventory, failed checkouts, and bot attempts            |
+| Scalability              | Redis clusters, horizontal scaling, queueing for peak traffic  |
+| Bot Detection            | CAPTCHA, email verification, and behavior-based throttling     |
+| Notifications            | Send purchase confirmation via email or SMS                    |
+
 
 
 
